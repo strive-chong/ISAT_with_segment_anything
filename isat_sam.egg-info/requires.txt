@@ -1,0 +1,17 @@
+imgviz
+scikit-image
+numpy
+opencv_python_headless
+pillow
+pyqt5
+pyyaml
+torch>=2.1.1
+torchvision
+pycocotools
+timm
+shapely
+hydra-core>=1.3.2
+tqdm>=4.66.1
+fuzzywuzzy
+python-Levenshtein
+iopath
