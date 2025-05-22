@@ -3,11 +3,22 @@ import json
 from pathlib import Path
 import re
 import dashscope
+import argparse
+
+# dashscope.api_key = "your_api_key_here"
+dashscope.api_key = "sk-4a47da58c2e64a53bc7b94d0892016be"
 
 
-dashscope.api_key = "your_api_key_here"
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=["32b", "72b"], default="32b")
+    parser.add_argument("--input_folder", type=str, required=True,
+                       help="Path to the folder containing images")
+    return parser.parse_args()
 
-# choose the model you want to use (72b and 32b are both OK)
+
+
+
 MODEL = "qwen2.5-vl-32b-instruct"
 # MODEL = "qwen2.5-vl-72b-instruct"
 
@@ -51,7 +62,7 @@ def extract_outputs(text):
     
     return eng_instruction, zh_instruction
 
-def process_image(image_path):
+def process_image(image_path, model_use):
     image_messages = [
         {"role": "system", "content": "You are a helpful assistant."},
         {
@@ -68,20 +79,22 @@ def process_image(image_path):
         },
     ]
 
-    response = dashscope.MultiModalConversation.call(model=MODEL, messages=image_messages)
+    response = dashscope.MultiModalConversation.call(model=model_use, messages=image_messages)
     output_text = response["output"].choices[0].message["content"][0]["text"]
     
     return extract_outputs(output_text)
 
 def main():
+    args = parse_arguments()
+    MODEL = f"qwen2.5-vl-{args.model}-instruct"
+    INPUT_FOLDER = Path(args.input_folder)
     english_outputs = {}
     
     for img_file in os.listdir(INPUT_FOLDER):
         if img_file.endswith(".png"):
             img_path = INPUT_FOLDER / img_file
             print(f"\n\nProcessing {img_file}...")
-            
-            eng_instruction, zh_instruction = process_image(img_path)
+            eng_instruction, zh_instruction = process_image(img_path, MODEL)
             
             if not zh_instruction and eng_instruction:
                 print("WARNING: No Chinese instruction found. Using translated English instruction.")
