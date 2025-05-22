@@ -57,3 +57,13 @@ Please refers to our latest [Documentation in English](https://isat-with-segment
   version={1.29}
 }
 ```
+# New features
+## 1. Use VLM to add note automatically
+### Usage
+1. add your api key
+2. `python add_note_api.py --model 32b (or 72b) --input_folder "/path/to/your/image folder"`
+
+### Install
+```
+pip install dashscope
+```
