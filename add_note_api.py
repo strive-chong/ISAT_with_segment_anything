@@ -5,8 +5,7 @@ import re
 import dashscope
 import argparse
 
-# dashscope.api_key = "your_api_key_here"
-dashscope.api_key = "sk-4a47da58c2e64a53bc7b94d0892016be"
+dashscope.api_key = "your_api_key_here"
 
 
 def parse_arguments():
