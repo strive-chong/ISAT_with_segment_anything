@@ -67,3 +67,14 @@ Please refers to our latest [Documentation in English](https://isat-with-segment
 ```
 pip install dashscope
 ```
+
+## 2. Simplify the labeling process
+### Usage
+1. Auto-enter manualkeypoint mode
+
+2. In manual_keypoint mode: \
+    Right-click to add a “place” label point.\
+    Middle-click to add a “pick” label point.\
+    Left-click to select a label point(selected points can be deleted).
+
+3. Auto-save when entering and switching between photos

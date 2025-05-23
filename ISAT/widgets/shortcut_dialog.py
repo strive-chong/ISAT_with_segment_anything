@@ -25,7 +25,8 @@ class ShortcutDialog(QtWidgets.QDialog, Ui_Dialog):
             self.mainwindow.actionNext_image,
             self.mainwindow.actionSetting,
             self.mainwindow.actionExit,
-
+            
+            self.mainwindow.actionSegment_anything_point2,
             self.mainwindow.actionSegment_anything_point,
             self.mainwindow.actionSegment_anything_box,
             self.mainwindow.actionPolygon,
