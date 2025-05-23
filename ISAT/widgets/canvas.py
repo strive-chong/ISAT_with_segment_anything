@@ -27,9 +27,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.click_points = []  # SAM point prompt
         self.click_points_mode = []  # SAM point prompt
         self.prompt_points = []
+        self.delete_points = []
         self.masks: np.ndarray = None
         self.mask_alpha = 0.5
         self.top_layer = 1
+        self.r_category = None
 
         self.guide_line_x: QtWidgets.QGraphicsLineItem = None
         self.guide_line_y: QtWidgets.QGraphicsLineItem = None
@@ -80,8 +82,8 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.mode = STATUSMode.CREATE
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
-        self.mainwindow.actionPrev_image.setEnabled(False)
-        self.mainwindow.actionNext_image.setEnabled(False)
+        self.mainwindow.actionPrev_image.setEnabled(True)
+        self.mainwindow.actionNext_image.setEnabled(True)
 
         self.mainwindow.actionSegment_anything_point2.setEnabled(False)
         self.mainwindow.actionSegment_anything_point.setEnabled(False)
@@ -120,9 +122,12 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.mode = STATUSMode.KEYPOINT
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
-        self.mainwindow.actionPrev_image.setEnabled(False)
-        self.mainwindow.actionNext_image.setEnabled(False)
+        
+        
+        self.mainwindow.actionPrev_image.setEnabled(True)
+        self.mainwindow.actionNext_image.setEnabled(True)
 
+        print  ('change_mode_to_create_manual_keypoint')
         self.mainwindow.actionSegment_anything_point2.setEnabled(False)
         self.mainwindow.actionSegment_anything_point.setEnabled(False)
         self.mainwindow.actionSegment_anything_box.setEnabled(False)
@@ -140,7 +145,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         self.mainwindow.actionIntersect.setEnabled(False)
         self.mainwindow.actionExclude.setEnabled(False)
         self.mainwindow.actionDelete.setEnabled(False)
-        self.mainwindow.actionSave.setEnabled(False)
+        self.mainwindow.actionSave.setEnabled(True)
         self.mainwindow.actionVisible.setEnabled(True)
 
         self.mainwindow.annos_dock_widget.setEnabled(False)
@@ -159,10 +164,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.ArrowCursor))
 
-        self.mainwindow.actionPrev_image.setEnabled(True)
-        self.mainwindow.actionNext_image.setEnabled(True)
+        
         self.mainwindow.SeganyEnabled()
         self.mainwindow.actionPolygon.setEnabled(self.mainwindow.can_be_annotated)
+        self.mainwindow.actionPrev_image.setEnabled(True)
+        self.mainwindow.actionNext_image.setEnabled(True)
         self.mainwindow.actionBackspace.setEnabled(False)
         self.mainwindow.actionFinish.setEnabled(False)
         self.mainwindow.actionCancel.setEnabled(True)
@@ -190,7 +196,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             color: white;
         """)
 
+        self.mainwindow.scene.start_manual_keypoint()
     def change_mode_to_edit(self):
+        print('change_mode_to_edit')
         self.mode = STATUSMode.EDIT
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
@@ -296,8 +304,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             return
         # 否则，切换到绘图模式
         self.change_mode_to_create_manual_keypoint()  # 切换为keypoint
-        if self.mainwindow.cfg['software']['create_mode_invisible_polygon']:
-            self.mainwindow.set_labels_visible(False)
+        # if self.mainwindow.cfg['software']['create_mode_invisible_polygon']:
+        #     try:
+        #         self.mainwindow.set_labels_visible(False)
+        #     except Exception as e:
+        #         print('set_labels_visible error:', e)
 
         # 绘图模式
         if self.mode == STATUSMode.KEYPOINT:
@@ -327,7 +338,6 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             self.addItem(self.current_graph)
 
     def finish_draw(self):
-
         if self.current_graph is None:
             return
 
@@ -373,6 +383,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                         x, y = point[0]
                         x = max(0.1, x)
                         y = max(0.1, y)
+                        #print("x, y:", x, y)
                         self.current_graph.addPoint(QtCore.QPointF(x, y))
                     center = [int(sum(point[0][0] for point in contour) / len(contour)), int(sum(point[0][1] for point in contour) / len(contour))]
                     if self.contour_mode == CONTOURMode.SAVE_ALL and hierarchy[0][index][3] != -1:
@@ -382,7 +393,19 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     else:
                         category = self.mainwindow.current_category
                         group = self.mainwindow.current_group
+                    
+                    
+                    all_categories = list(self.mainwindow.category_color_dict.keys())
+                    
+                    if self.r_category == 1:
+                        # 选择类别一 左键
+                        category = all_categories[1]
+                    elif self.r_category == 2:
+                        # 选择类别二 右键
+                        category = all_categories[2]
 
+                    print("current_categorie:", category)
+                        
                     self.current_graph.set_drawed(category,
                                                   group,
                                                   is_crowd,
@@ -390,7 +413,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                                                   QtGui.QColor(self.mainwindow.category_color_dict[category]),
                                                   self.top_layer,
                                                   center=center)
-
+                    # for polygon in self.selected_polygons_list:
+                    #     print('polygon.category:', polygon.category)
+                    #     print('polygon.group:', polygon.group)
+                    #     print('polygon.points:', polygon.points)
                     # 添加新polygon
                     self.mainwindow.polygons.append(self.current_graph)
                     self.mainwindow.annos_dock_widget.listwidget_add_polygon(self.current_graph)
@@ -404,7 +430,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     self.mainwindow.categories_dock_widget.lineEdit_currentGroup.setText(
                         str(self.mainwindow.current_group))
                 self.masks = None
-        elif self.draw_mode == DRAWMode.POLYGON:
+        elif self.draw_mode == DRAWMode.POLYGON:        
             if len(self.current_graph.points) < 1:
                 return
 
@@ -856,16 +882,40 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             self.last_draw_time = time.time()
             self.pressd = True
 
-            if event.button() == QtCore.Qt.MouseButton.LeftButton:  # 鼠标左键事件
+            
+
+            if event.button() == QtCore.Qt.MouseButton.MiddleButton:  # 鼠标左键事件
+                
                 if self.draw_mode == DRAWMode.MANUALKEYPOINT:
+                    self.r_category = 1
+                    print('left button')
                     self.click_points.append([sceneX, sceneY])  # 添加鼠标点位
                     self.click_points_mode.append(1)
                     prompt_point = PromptPoint(QtCore.QPointF(sceneX, sceneY), 1)
                     prompt_point.setVisible(self.mainwindow.cfg['software']['show_prompt'])
                     self.prompt_points.append(prompt_point)
                     self.addItem(prompt_point)
+            elif event.button() == QtCore.Qt.MouseButton.RightButton: #鼠标右键事件
+                
+                if self.draw_mode == DRAWMode.MANUALKEYPOINT:
+                    self.r_category = 2
+                    print('right button')
+                    self.click_points.append([sceneX, sceneY])  # 添加鼠标点位
+                    self.click_points_mode.append(1)
+                    prompt_point = PromptPoint(QtCore.QPointF(sceneX, sceneY), 1)
+                    prompt_point.setVisible(self.mainwindow.cfg['software']['show_prompt'])
+                    self.prompt_points.append(prompt_point)
+                    self.addItem(prompt_point)
+                
+                    
+                
+                
+                    
             if self.draw_mode == DRAWMode.MANUALKEYPOINT:
                 self.update_mask_manual_key_point()
+
+            print('finish !')
+            self.finish_draw()
 
         if self.mode == STATUSMode.CREATE:
             # 拖动鼠标描点
@@ -1120,6 +1170,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             # 这里通过调整原始图像的权重self.mask_alpha，来调整mask的明显程度。
             mask_image = cv2.addWeighted(self.image_data, self.mask_alpha, mask_image, 1, 0)
         else:
+            print('no mask')
             mask_image = np.zeros(self.image_data.shape, dtype=np.uint8)
             mask_image = cv2.addWeighted(self.image_data, 1, mask_image, 0, 0)
         mask_image = QtGui.QImage(mask_image[:], mask_image.shape[1], mask_image.shape[0], mask_image.shape[1] * 3,
