@@ -1,9 +1,9 @@
 label:
 - color: '#000000'
   name: __background__
-- color: '#ef2929'
+- color: '#0433ff'
   name: pick
-- color: '#fcaf3e'
+- color: '#ff2600'
   name: place
 shortcut:
   actionAbout:
