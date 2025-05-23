@@ -12,7 +12,6 @@ class AnnosDockWidget(QtWidgets.QWidget, Ui_Form):
         self.setupUi(self)
         self.mainwindow = mainwindow
         self.polygon_item_dict = {}
-
         self.listWidget.itemSelectionChanged.connect(self.set_polygon_selected)
         self.checkBox_visible.stateChanged.connect(self.set_all_polygon_visible)
 
@@ -114,6 +113,7 @@ class AnnosDockWidget(QtWidgets.QWidget, Ui_Form):
         self.mainwindow.set_saved_state(False)
 
     def set_selected(self, polygon):
+        print('set_selected')
         item = self.polygon_item_dict[polygon]
         if polygon.isSelected():
             if not item.isSelected():
@@ -127,6 +127,7 @@ class AnnosDockWidget(QtWidgets.QWidget, Ui_Form):
         items = self.listWidget.selectedItems()
         have_selected = True if items else False
         if have_selected:
+            print('selected')
             self.mainwindow.scene.change_mode_to_edit()
 
             if len(self.mainwindow.scene.selected_polygons_list) != 2 or len(self.listWidget.selectedItems()) != 2:

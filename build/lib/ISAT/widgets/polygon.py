@@ -125,6 +125,20 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
         self.setZValue(1e5)
 
+    # def mousePressEvent(self, event: 'QtWidgets.QGraphicsSceneMouseEvent'):
+    #     if event.button() == QtCore.Qt.MouseButton.MiddleButton:
+    #         # 中键选中逻辑
+    #         if not self.isSelected():
+    #             self.setSelected(True)
+    #         else:
+    #             self.setSelected(False)
+    #     elif event.button() == QtCore.Qt.MouseButton.LeftButton:
+    #         # 只处理移动等其他行为，不处理选中
+    #         if self.flags() & QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable:
+    #             super().mousePressEvent(event)
+    #     else:
+    #         # 其他按键的默认行为
+    #         super().mousePressEvent(event)
     def addPoint(self, point):
         self.points.append(point)
         vertex = Vertex(self, self.color, self.scene().mainwindow.cfg['software']['vertex_size'] * 2)
@@ -171,13 +185,15 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
                 and not self.is_drawing
                 and self.scene().mode != STATUSMode.CREATE):  # 选中改变
             if self.isSelected():
-                color = QtGui.QColor('#00A0FF')
-                color.setAlpha(self.hover_alpha)
-                self.setBrush(color)
+                print('Polygon selected')
+                # color = QtGui.QColor('#00A0FF')
+                # color.setAlpha(self.hover_alpha)
+                # self.setBrush(color)
                 self.scene().selected_polygons_list.append(self)
             else:
-                self.color.setAlpha(self.nohover_alpha)
-                self.setBrush(self.color)
+                print('Polygon unselected')
+                # self.color.setAlpha(self.nohover_alpha)
+                # self.setBrush(self.color)
                 if self in self.scene().selected_polygons_list:
                     self.scene().selected_polygons_list.remove(self)
             self.scene().mainwindow.annos_dock_widget.set_selected(self)  # 更新label面板
@@ -214,11 +230,12 @@ class Polygon(QtWidgets.QGraphicsPolygonItem):
             self.setBrush(self.color)
         super(Polygon, self).hoverEnterEvent(event)
 
-    def mouseDoubleClickEvent(self, event: 'QGraphicsSceneMouseEvent'):
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self.scene().mainwindow.category_edit_widget.polygon = self
-            self.scene().mainwindow.category_edit_widget.load_cfg()
-            self.scene().mainwindow.category_edit_widget.show()
+    # def mouseDoubleClickEvent(self, event: 'QGraphicsSceneMouseEvent'):
+    #     print('mouseDoubleClickEvent')
+    #     if event.button() == QtCore.Qt.MouseButton.LeftButton:
+    #         self.scene().mainwindow.category_edit_widget.polygon = self
+    #         self.scene().mainwindow.category_edit_widget.load_cfg()
+    #         self.scene().mainwindow.category_edit_widget.show()
 
     def redraw(self):
         if len(self.points) < 1:
