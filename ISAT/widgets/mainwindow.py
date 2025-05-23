@@ -402,6 +402,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.current_label: Annotation = None
 
         self.use_manual_keypoint = False # 自定义标注类型
+        # print('1 self.use_manual_keypoint:', self.use_manual_keypoint)
+
         self.use_segment_anything = False
         self.use_segment_anything_video = False
         self.gpu_resource_thread = None
@@ -473,6 +475,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setEnabled(False)
 
     def init_sam_finish(self, sam_tag: bool, sam_video_tag: bool):
+        sam_tag = True
         print('sam_tag:', sam_tag, 'sam_video_tag: ', sam_video_tag)
         self.setEnabled(True)
         if sam_video_tag:
@@ -992,13 +995,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.categories_dock_widget.lineEdit_currentGroup.setText(str(self.current_group))
 
     def show_image(self, index: int, zoomfit: bool = True):
+
         if not self.saved:
             result = QtWidgets.QMessageBox.question(self, 'Warning', 'Proceed without saved?',
                                                     QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
                                                     QtWidgets.QMessageBox.StandardButton.No)
             if result == QtWidgets.QMessageBox.StandardButton.No:
                 return
-
         self.reset_action()
         self.scene.cancel_draw()
         self.scene.unload_image()
@@ -1026,6 +1029,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.can_be_annotated = True
 
             if self.can_be_annotated:
+                print('can be annotated')
+                
                 self.actionPolygon.setEnabled(True)
                 self.actionSave.setEnabled(True)
                 self.actionBit_map.setEnabled(True)
@@ -1081,6 +1086,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 self.setWindowTitle('{}'.format(file_path))
 
+            self.scene.start_manual_keypoint()
             self.annos_dock_widget.update_listwidget()
             self.info_dock_widget.update_widget()
             self.files_dock_widget.set_select(index)
@@ -1102,8 +1108,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.actionNext_image.setEnabled(False)
 
     def prev_image(self):
-        if self.scene.mode != STATUSMode.VIEW:
-            return
+        self.save()
+        # if self.scene.mode != STATUSMode.VIEW:
+        #     return
         if self.current_index is None:
             return
         current_index = self.current_index - 1
@@ -1113,8 +1120,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.show_image(current_index)
 
     def next_image(self):
-        if self.scene.mode != STATUSMode.VIEW:
-            return
+        self.save()
+        # if self.scene.mode != STATUSMode.VIEW:
+        #     return
         if self.current_index is None:
             return
         current_index = self.current_index + 1
