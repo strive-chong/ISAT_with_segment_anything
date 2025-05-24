@@ -5,7 +5,7 @@ import re
 import dashscope
 import argparse
 
-dashscope.api_key = "your_api_key_here"
+dashscope.api_key = 'sk-4a47da58c2e64a53bc7b94d0892016be'
 
 
 def parse_arguments():
@@ -88,9 +88,10 @@ def main():
     MODEL = f"qwen2.5-vl-{args.model}-instruct"
     INPUT_FOLDER = Path(args.input_folder)
     english_outputs = {}
-    
+    SUPPORTED_IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', '.bmp', '.webp')#定义支持的图片格式
+
     for img_file in os.listdir(INPUT_FOLDER):
-        if img_file.endswith(".png"):
+        if img_file.lower().endswith(SUPPORTED_IMAGE_FORMATS):
             img_path = INPUT_FOLDER / img_file
             print(f"\n\nProcessing {img_file}...")
             eng_instruction, zh_instruction = process_image(img_path, MODEL)
