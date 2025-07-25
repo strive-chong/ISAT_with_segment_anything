@@ -126,23 +126,12 @@ class AnnosDockWidget(QtWidgets.QWidget, Ui_Form):
     def set_polygon_selected(self):
         items = self.listWidget.selectedItems()
         have_selected = True if items else False
-        if have_selected:
-            print('selected')
-            self.mainwindow.scene.change_mode_to_edit()
-
-            if len(self.mainwindow.scene.selected_polygons_list) != 2 or len(self.listWidget.selectedItems()) != 2:
-                self.mainwindow.actionUnion.setEnabled(False)
-                self.mainwindow.actionSubtract.setEnabled(False)
-                self.mainwindow.actionIntersect.setEnabled(False)
-                self.mainwindow.actionExclude.setEnabled(False)
-            # 编辑，置顶等功能只针对单个多边形
-            if len(items) > 1:
-                self.mainwindow.actionTo_top.setEnabled(False)
-                self.mainwindow.actionTo_bottom.setEnabled(False)
-                self.mainwindow.actionEdit.setEnabled(False)
-                self.mainwindow.actionCopy.setEnabled(False)
-        else:
-            self.mainwindow.scene.change_mode_to_view()
+        # 移除自动切换scene.mode的逻辑
+        # if have_selected:
+        #     print('selected')
+        #     self.mainwindow.scene.change_mode_to_edit()
+        # else:
+        #     self.mainwindow.scene.change_mode_to_view()
 
         for index, polygon in enumerate(self.mainwindow.polygons):
             if polygon not in self.polygon_item_dict:

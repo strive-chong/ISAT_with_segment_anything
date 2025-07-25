@@ -7,21 +7,6 @@ import typing
 from ISAT.configs import STATUSMode, CLICKMode, DRAWMode, CONTOURMode
 
 
-class PromptPoint(QtWidgets.QGraphicsPathItem):
-    def __init__(self, pos, type=0):
-        super(PromptPoint, self).__init__()
-        self.color = QtGui.QColor('#0000FF') if type == 0 else QtGui.QColor('#00FF00')
-        self.color.setAlpha(255)
-        self.painterpath = QtGui.QPainterPath()
-        self.painterpath.addEllipse(
-            QtCore.QRectF(-1, -1, 2, 2))
-        self.setPath(self.painterpath)
-        self.setBrush(self.color)
-        self.setPen(QtGui.QPen(self.color, 3))
-        self.setZValue(1e5)
-
-        self.setPos(pos)
-
 
 class Vertex(QtWidgets.QGraphicsPathItem):
     def __init__(self, polygon, color, nohover_size=2):
@@ -519,3 +504,50 @@ class Rect(QtWidgets.QGraphicsRectItem):
             return
 
         self.setRect(QtCore.QRectF(self.points[0], self.points[-1]))
+
+
+class PromptPoint(QtWidgets.QGraphicsPathItem):
+    def __init__(self, pos, type=0, index=None):
+        super(PromptPoint, self).__init__()
+        self.color = QtGui.QColor('#0000FF') if type == 0 else QtGui.QColor('#00FF00')
+        self.color.setAlpha(255)
+        self.painterpath = QtGui.QPainterPath()
+        self.painterpath.addEllipse(QtCore.QRectF(-1, -1, 2, 2))  # 视觉小点
+        self.setPath(self.painterpath)
+        self.setBrush(self.color)
+        self.setPen(QtGui.QPen(self.color, 3))
+        self.setZValue(1e6)  # 保证在Polygon之上
+        self.setPos(pos)
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)  # 允许被选中
+        self.setAcceptedMouseButtons(QtCore.Qt.RightButton)  # 只接受右键
+        self.index = index
+
+    def shape(self):
+        # 返回一个更大的可点击区域（半径6的圆，12x12）
+        path = QtGui.QPainterPath()
+        path.addEllipse(QtCore.QRectF(-6, -6, 12, 12))
+        return path
+
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
+            if self.isSelected():
+                self.setBrush(QtGui.QColor('#FFD700'))  # 选中高亮
+            else:
+                self.setBrush(self.color)
+        return super().itemChange(change, value)
+
+    def mousePressEvent(self, event):
+        print('PromptPoint.mousePressEvent 被触发')
+        if event.button() == QtCore.Qt.MouseButton.RightButton:
+            self.setSelected(True)
+            # 同步记录选中的 click_point index
+            scene = self.scene()
+            if scene is not None and hasattr(self, 'index'):
+                if not hasattr(scene, 'selected_click_point_indices'):
+                    scene.selected_click_point_indices = []
+                if self.index not in scene.selected_click_point_indices:
+                    scene.selected_click_point_indices.append(self.index)
+            event.accept()
+        else:
+            event.ignore()

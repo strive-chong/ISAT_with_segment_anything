@@ -160,7 +160,9 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         """)
 
     def change_mode_to_view(self):
+        print('change_mode_to_view, before:', self.mode)
         self.mode = STATUSMode.VIEW
+        print('change_mode_to_view, after:', self.mode)
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.ArrowCursor))
 
@@ -198,8 +200,10 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         self.mainwindow.scene.start_manual_keypoint()
     def change_mode_to_edit(self):
+        print('change_mode_to_edit, before:', self.mode)
         print('change_mode_to_edit')
         self.mode = STATUSMode.EDIT
+        print('change_mode_to_edit, after:', self.mode)
         if self.image_item is not None:
             self.image_item.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.CrossCursor))
 
@@ -395,14 +399,14 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                         group = self.mainwindow.current_group
                     
                     
-                    all_categories = list(self.mainwindow.category_color_dict.keys())
+                    # all_categories = list(self.mainwindow.category_color_dict.keys())
                     
-                    if self.r_category == 1:
-                        # 选择类别一 左键
-                        category = all_categories[1]
-                    elif self.r_category == 2:
-                        # 选择类别二 右键
-                        category = all_categories[2]
+                    # if self.r_category == 1:
+                    #     # 选择类别一 左键
+                    #     category = all_categories[1]
+                    # elif self.r_category == 2:
+                    #     # 选择类别二 右键
+                    #     category = all_categories[2]
 
                     print("current_categorie:", category)
                         
@@ -492,12 +496,12 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
         # mask清空
         self.click_points.clear()
         self.click_points_mode.clear()
-        for prompt_point in self.prompt_points:
-            try:
-                self.removeItem(prompt_point)
-            finally:
-                del prompt_point
-        self.prompt_points.clear()
+        # for prompt_point in self.prompt_points:
+        #     try:
+        #         self.removeItem(prompt_point)
+        #     finally:
+        #         del prompt_point
+        # self.prompt_points.clear()
         self.update_mask()
 
     def cancel_draw(self):
@@ -526,11 +530,11 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
         self.click_points.clear()
         self.click_points_mode.clear()
-        for prompt_point in self.prompt_points:
-            try:
-                self.removeItem(prompt_point)
-            finally:
-                del prompt_point
+        # for prompt_point in self.prompt_points:
+        #     try:
+        #         self.removeItem(prompt_point)
+        #     finally:
+        #         del prompt_point
         self.prompt_points.clear()
 
         self.update_mask()
@@ -871,11 +875,32 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
             self.mainwindow.annos_dock_widget.update_listwidget()
 
     def mousePressEvent(self, event: 'QtWidgets.QGraphicsSceneMouseEvent'):
+        print('scene.mousePressEvent, mode:', self.mode)
+        from ISAT.widgets.polygon import PromptPoint  # 修正作用域，确保全函数可用
         sceneX, sceneY = event.scenePos().x(), event.scenePos().y()
         sceneX = 0 if sceneX < 0 else sceneX
         sceneX = self.width() - 1 if sceneX > self.width() - 1 else sceneX
         sceneY = 0 if sceneY < 0 else sceneY
         sceneY = self.height() - 1 if sceneY > self.height() - 1 else sceneY
+
+        # 优先让已有的 PromptPoint 响应右键
+        if event.button() == QtCore.Qt.MouseButton.RightButton:
+            from ISAT.widgets.polygon import PromptPoint, Polygon
+            items = self.items(event.scenePos())
+            print(f'右键点击位置 items 数量: {len(items)}')
+            for item in items:
+                print('item:', type(item), item, 'z:', item.zValue() if hasattr(item, 'zValue') else '无z')
+                if isinstance(item, PromptPoint):
+                    print('右键点在PromptPoint上')
+                    super().mousePressEvent(event)
+                    return
+                # 新增：右键选中Polygon
+                if isinstance(item, Polygon):
+                    print('右键点在Polygon上')
+                    item.setSelected(True)
+                    return
+            print('右键点在空白处')
+            return  # 右键空白处不做任何事
 
         if self.mode == STATUSMode.KEYPOINT:  # mkp
             # 拖动鼠标描点
@@ -884,33 +909,27 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
 
             
 
-            if event.button() == QtCore.Qt.MouseButton.MiddleButton:  # 鼠标左键事件
-                
+            if event.button() == QtCore.Qt.MouseButton.LeftButton:  # 鼠标左键事件（原本是MiddleButton）
                 if self.draw_mode == DRAWMode.MANUALKEYPOINT:
-                    self.r_category = 1
+                    self.r_category = 2
                     print('left button')
                     self.click_points.append([sceneX, sceneY])  # 添加鼠标点位
                     self.click_points_mode.append(1)
-                    prompt_point = PromptPoint(QtCore.QPointF(sceneX, sceneY), 1)
+                    prompt_point = PromptPoint(QtCore.QPointF(sceneX, sceneY), 1, index=len(self.click_points)-1)
                     prompt_point.setVisible(self.mainwindow.cfg['software']['show_prompt'])
+                    prompt_point.setSelected(False)  # 防止新建点被选中
                     self.prompt_points.append(prompt_point)
                     self.addItem(prompt_point)
-            elif event.button() == QtCore.Qt.MouseButton.RightButton: #鼠标右键事件
-                
-                if self.draw_mode == DRAWMode.MANUALKEYPOINT:
-                    self.r_category = 2
-                    print('right button')
-                    self.click_points.append([sceneX, sceneY])  # 添加鼠标点位
-                    self.click_points_mode.append(1)
-                    prompt_point = PromptPoint(QtCore.QPointF(sceneX, sceneY), 1)
-                    prompt_point.setVisible(self.mainwindow.cfg['software']['show_prompt'])
-                    self.prompt_points.append(prompt_point)
-                    self.addItem(prompt_point)
-                
-                    
-                
-                
-                    
+                    print('添加PromptPoint:', prompt_point, 'visible:', prompt_point.isVisible(), 'z:', prompt_point.zValue())
+                    # 输出 scene 里所有 PromptPoint
+                    from ISAT.widgets.polygon import PromptPoint as PP
+                    all_items = self.items()
+                    pp_list = [item for item in all_items if isinstance(item, PP)]
+                    print(f'当前scene中PromptPoint数量: {len(pp_list)}')
+                    for idx, pp in enumerate(pp_list):
+                        print(f'  PromptPoint[{idx}]: pos={pp.pos()}, z={pp.zValue()}, visible={pp.isVisible()}')
+            # 右键已在前面处理，这里无需再处理
+            
             if self.draw_mode == DRAWMode.MANUALKEYPOINT:
                 self.update_mask_manual_key_point()
 
@@ -1032,7 +1051,7 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                     # 添加随鼠标移动的点
                     self.current_line.addPoint(QtCore.QPointF(sceneX, sceneY))
 
-        super(AnnotationScene, self).mousePressEvent(event)
+        # 不要在最后调用super().mousePressEvent(event)
 
     # 拖动鼠标描点
     def mouseReleaseEvent(self, event: 'QtWidgets.QGraphicsSceneMouseEvent'):
@@ -1251,6 +1270,51 @@ class AnnotationScene(QtWidgets.QGraphicsScene):
                 return
             self.current_line.removePoint(len(self.current_line.points) - 2)
 
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            selected_prompt_points = [item for item in self.selectedItems() if hasattr(item, 'index')]
+            indices_to_delete = sorted([pp.index for pp in selected_prompt_points if pp.index is not None], reverse=True)
+            for idx in indices_to_delete:
+                if hasattr(self, 'click_points') and idx < len(self.click_points):
+                    self.click_points.pop(idx)
+                if hasattr(self, 'click_points_mode') and idx < len(self.click_points_mode):
+                    self.click_points_mode.pop(idx)
+            # 删除 PromptPoint
+            for pp in selected_prompt_points:
+                if hasattr(self, 'prompt_points') and pp in self.prompt_points:
+                    self.prompt_points.remove(pp)
+                self.removeItem(pp)
+            # 删除 Vertex
+            try:
+                from ISAT.widgets.polygon import Vertex, Polygon
+                for pp in selected_prompt_points:
+                    my_pos = pp.scenePos()
+                    for item in self.items():
+                        if isinstance(item, Polygon):
+                            for v in getattr(item, 'vertexs', []):
+                                if (abs(v.pos().x() - my_pos.x()) < 1e-1 and
+                                    abs(v.pos().y() - my_pos.y()) < 1e-1):
+                                    self.removeItem(v)
+                                    item.vertexs.remove(v)
+                                    break
+            except Exception as e:
+                print('删除 Vertex 失败:', e)
+            # 新增：删除选中的Polygon对象
+            selected_polygons = [item for item in self.selectedItems() if hasattr(item, 'vertexs')]
+            if selected_polygons:
+                self.delete_selected_graph()
+            # 清空选中索引
+            if hasattr(self, 'selected_click_point_indices'):
+                self.selected_click_point_indices.clear()
+            # 关键：刷新 mask 和 Polygon
+            if hasattr(self, 'update_mask_manual_key_point'):
+                self.update_mask_manual_key_point()
+            if hasattr(self, 'finish_draw'):
+                self.finish_draw()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
+
 
 class AnnotationView(QtWidgets.QGraphicsView):
     def __init__(self, parent=None):
@@ -1260,7 +1324,7 @@ class AnnotationView(QtWidgets.QGraphicsView):
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
         self.factor = 1.2
-
+        self.setContextMenuPolicy(QtCore.Qt.NoContextMenu)  # 禁用右键菜单
         # 影响了窗口截图功能，暂时注释掉
         # self.setViewport(QtWidgets.QOpenGLWidget())
         # self.setRenderHint(QtGui.QPainter.Antialiasing, False)

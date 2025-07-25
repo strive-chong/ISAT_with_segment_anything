@@ -1,10 +1,14 @@
 label:
 - color: '#000000'
   name: __background__
-- color: '#0433ff'
-  name: pick
-- color: '#ff2600'
-  name: place
+- color: '#ef2929'
+  name: left_arm_pick_pos
+- color: '#fcaf3e'
+  name: left_arm_place_pos
+- color: '#0000ff'
+  name: right_arm_pick_pos
+- color: '#00ff00'
+  name: right_arm_place_pos
 shortcut:
   actionAbout:
     default_key: ''
@@ -19,8 +23,8 @@ shortcut:
     default_key: Z
     key: Z
   actionBit_map:
-    default_key: Space
-    key: Space
+    default_key: B
+    key: B
   actionCancel:
     default_key: Esc
     key: Esc
@@ -35,7 +39,7 @@ shortcut:
     key: Del
   actionEdit:
     default_key: ''
-    key: ''
+    key: Space
   actionExclude:
     default_key: Ctrl+E
     key: Ctrl+E

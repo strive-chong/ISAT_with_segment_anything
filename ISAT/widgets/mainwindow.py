@@ -401,7 +401,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # 标注目标
         self.current_label: Annotation = None
 
-        self.use_manual_keypoint = False # 自定义标注类型
+        self.use_manual_keypoint = True # manualkeypoint始终可用
         # print('1 self.use_manual_keypoint:', self.use_manual_keypoint)
 
         self.use_segment_anything = False
@@ -418,6 +418,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.init_connect()
         self.reset_action()
+
+        # 强制绑定actionEdit快捷键和信号，防止被覆盖
+        self.actionEdit.setShortcut(QtGui.QKeySequence('Space'))
+        try:
+            self.actionEdit.triggered.disconnect()
+        except Exception:
+            pass
+        self.actionEdit.triggered.connect(self.scene.change_mode_to_edit)
 
         # sam初始化线程，大模型加载较慢
         self.init_segany_thread = InitSegAnyThread(self)
@@ -478,8 +486,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         sam_tag = True
         print('sam_tag:', sam_tag, 'sam_video_tag: ', sam_video_tag)
         self.setEnabled(True)
-        if sam_video_tag:
-            self.use_segment_anything_video = True
+        # 只设置use_segment_anything，不再影响use_manual_keypoint
+        if sam_tag:
+            self.use_segment_anything = True
             if self.files_list:
                 self.segany_video.init_state(self.image_root, self.files_list)
 
@@ -499,7 +508,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         else:
             self.segany_video_thread = None
-            self.use_segment_anything_video = False
+            self.use_segment_anything = False
             torch.cuda.empty_cache()
 
         self.actionVideo_segment.setEnabled(self.use_segment_anything_video)
@@ -592,10 +601,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.actionSegment_anything_point.setEnabled(False)
             self.actionSegment_anything_box.setEnabled(False)
             return
-        if not self.use_manual_keypoint:
-            self.actionSegment_anything_point2.setEnabled(False)
-            return
-
+        # manualkeypoint始终可用，不再return
         results = self.seganythread.results_dict.get(self.current_index, {})
         features = results.get('features', None)
         original_size = results.get('original_size', None)
@@ -1489,7 +1495,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionCancel.triggered.connect(self.scene.cancel_draw)
         self.actionBackspace.triggered.connect(self.scene.backspace)
         self.actionFinish.triggered.connect(self.scene.finish_draw)
-        self.actionEdit.triggered.connect(self.scene.edit_polygon)
+        self.actionEdit.triggered.connect(self.scene.change_mode_to_edit)
         self.actionDelete.triggered.connect(self.scene.delete_selected_graph)
         self.actionSave.triggered.connect(self.save)
         self.actionTo_top.triggered.connect(self.scene.move_polygon_to_top)
@@ -1524,6 +1530,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionLanguage.triggered.connect(self.change_language)
 
         self.annos_dock_widget.listWidget.doubleClicked.connect(self.scene.edit_polygon)
+        self.actionBit_map.setShortcut(QtGui.QKeySequence('B'))
+        self.actionEdit.setShortcut(QtGui.QKeySequence('Space'))
 
     def reset_action(self):
         self.actionPrev_image.setEnabled(False)
